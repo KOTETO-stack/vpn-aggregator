@@ -1,0 +1,31 @@
+name: Update VPN Configs
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run bash aggregator
+        run: |
+          chmod +x update.sh
+          ./update.sh
+        timeout-minutes: 10
+      
+      - name: Commit and push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add output/
+          git commit -m "Update VPN configs: $(date -u +'%Y-%m-%d %H:%M UTC')" || echo "No changes"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git || echo "Nothing to push"
